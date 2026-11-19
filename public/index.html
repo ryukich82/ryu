@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=3844a92e-7b3f-444f-b19e-e87f388d269d
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내기골프 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f1ea; --card:#fffdf8; --ink:#1d2a22; --mute:#6b766e; --line:#e2ddd0;
+  --green:#1f5c3a; --green2:#2f7d52; --greenSoft:#e3efe6;
+  --gold:#b8860b; --goldSoft:#fbf0d4; --red:#b23a2e; --redSoft:#f8e2de; --blue:#245d8f; --blueSoft:#e0ebf5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;font-size:15px;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 60px}
+header{background:var(--green);color:#fff;border-radius:18px;padding:16px 16px 14px;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.07)}
+header h1{margin:0 0 10px;font-size:20px;font-weight:900;letter-spacing:-.5px}
+.meta{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;position:relative;z-index:1}
+.meta label{font-size:11px;opacity:.75;display:block;margin-bottom:3px}
+.meta input{width:100%;border:0;border-radius:9px;padding:8px 9px;font:inherit;font-size:14px;background:rgba(255,255,255,.14);color:#fff}
+.meta input::placeholder{color:rgba(255,255,255,.55)}
+.meta input:focus{outline:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.2)}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
+h2{font-size:15px;margin:0 0 10px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
+h2 small{font-weight:400;color:var(--mute);font-size:12px}
+.players{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pcard{display:flex;flex-direction:column;gap:5px;position:relative}
+.pcard input[data-f="phone"]{font-size:12px;padding:7px 4px;color:var(--mute)}
+.pcard.me input{border-color:var(--green2);background:var(--greenSoft);font-weight:700}
+.metag{display:inline-block;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:20px;padding:1px 7px;vertical-align:2px}
+.pcard .metag{position:absolute;top:-7px;right:-4px}
+.sync{position:relative;z-index:1;display:inline-block;margin:-4px 0 10px;font-size:12px;background:rgba(255,255,255,.16);border-radius:20px;padding:3px 10px}
+.sync.saving{background:rgba(255,255,255,.1)}
+.sync.err{background:#f8e2de;color:var(--red)}
+#share{margin-top:12px}
+.shareIntro{background:var(--greenSoft);border-radius:12px;padding:12px}
+.shareIntro p{font-size:13px;color:#3d4a42;line-height:1.6;margin:6px 0 10px}
+.shareHead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;padding-top:4px}
+.shareHead small{font-size:11px;color:var(--mute)}
+.srow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
+.sname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sname small{display:block;font-weight:400;color:var(--mute);font-size:12px}
+.sbtn{border:0;border-radius:10px;padding:9px 11px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:var(--green);color:#fff;text-decoration:none;white-space:nowrap}
+.sbtn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.sbtn.off{background:#cfcabd}
+.joinNote{font-size:13px;color:#3d4a42;margin:0 0 10px}
+.joinForm{display:flex;gap:8px}
+.joinForm input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;font-size:17px;min-width:0}
+.joinForm .btn{flex:0 0 96px}
+.prow.me{background:var(--greenSoft);border-radius:12px;padding-left:8px;padding-right:8px;border-top-color:transparent}
+.prow.locked .stepper i{display:block;width:40px}
+.seg.ro button{cursor:default}
+.seg.ro button:not(.on){color:var(--mute)}
+.tbl tr.me td.n{color:var(--green2)}
+body.as-player .hostOnly{display:none}
+body.as-player input[readonly]{background:#f7f4ec;color:var(--mute)}
+body.as-player .pcard.me input[readonly]{background:var(--greenSoft);color:var(--ink)}
+.meta input[readonly]{opacity:.8}
+body.as-player .meta input[readonly]{background:rgba(255,255,255,.14);color:#fff}
+.players input{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 8px;font:inherit;text-align:center;background:#fff}
+.holes{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.chip{flex:0 0 auto;width:42px;border:1px solid var(--line);background:#fff;border-radius:11px;padding:5px 0 4px;text-align:center;cursor:pointer;font:inherit;color:var(--ink)}
+.chip b{display:block;font-size:15px}
+.chip span{display:block;font-size:10px;color:var(--mute)}
+.chip.sep{margin-left:8px}
+.chip.dbl{background:var(--goldSoft);border-color:#e8cf8a}
+.chip.carry{background:var(--blueSoft);border-color:#a9c4de}
+.chip.on{outline:2.5px solid var(--green);outline-offset:-1px}
+.holeHead{display:flex;align-items:center;justify-content:space-between;margin:10px 0 8px;gap:8px;flex-wrap:wrap}
+.holeTitle{font-size:22px;font-weight:900}
+.holeTitle span{font-size:13px;font-weight:500;color:var(--mute);margin-left:4px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:7px 11px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--green);color:#fff}
+.stakeBox{border-radius:12px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--greenSoft)}
+.stakeBox.dbl{background:var(--goldSoft)}
+.stakeBox .amt{font-size:20px;font-weight:900;white-space:nowrap}
+.stakeBox .why{font-size:12px;color:var(--mute);margin-top:2px}
+.stakeBox .tag{font-size:12px;font-weight:700}
+.prow{display:grid;grid-template-columns:1fr auto 88px;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line)}
+.prow:first-of-type{border-top:0}
+.pname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pname small{display:block;font-weight:400;color:var(--mute);font-size:12px}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:22px;line-height:1;cursor:pointer;color:var(--ink)}
+.stepper button:active{background:var(--greenSoft)}
+.score{width:66px;text-align:center}
+.score b{display:block;font-size:20px}
+.score span{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;background:#eee;color:#444}
+.s-eagle span{background:#6b3fa0;color:#fff}.s-birdie span{background:var(--blue);color:#fff}.s-par span{background:var(--greenSoft);color:var(--green)}
+.s-bogey span{background:#f1ece0}.s-double span{background:#f4d9c4}.s-worse span{background:var(--redSoft);color:var(--red)}
+.money{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.pos{color:var(--green2)}.neg{color:var(--red)}.zero{color:var(--mute)}
+.nav{display:flex;gap:8px;margin-top:10px}
+.nav button,.btn{flex:1;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:700;cursor:pointer;background:var(--green);color:#fff}
+.nav button.ghost,.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:#fff;color:var(--red);border:1px solid #e9c3bd}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+.tbl table{font-size:13px;min-width:640px}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:center}
+.tbl th{font-weight:500;color:var(--mute);font-size:12px}
+.tbl td.n{text-align:left;font-weight:700;white-space:nowrap;padding-left:2px}
+.tbl tr.par td{color:var(--mute)}
+.tbl td.sum{font-weight:700;background:#f7f4ec}
+.tbl .click{cursor:pointer}
+.tbl td.dbl{background:var(--goldSoft)} .tbl td.carry{background:var(--blueSoft)}
+.settle{font-size:13px}
+.settle td,.settle th{padding:9px 3px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.settle td:first-child{max-width:92px;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.settle th{font-size:12px;font-weight:500;color:var(--mute)}
+.settle td:first-child,.settle th:first-child{text-align:left}
+.settle td.final{font-size:17px;font-weight:900}
+.settle input{width:64px;border:1px solid var(--line);border-radius:8px;padding:6px;text-align:right;font:inherit;font-size:13px}
+.rank{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--greenSoft);color:var(--green);font-size:11px;line-height:20px;text-align:center;margin-right:6px;font-weight:700}
+.pay{display:grid;grid-template-columns:1fr 14px 1fr 148px;align-items:center;gap:8px;padding:10px 0;border-top:1px dashed var(--line)}
+.pay:first-child{border-top:0}
+.pay .from{font-weight:700;color:var(--red);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay .to{font-weight:700;color:var(--green2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay .arr{color:var(--mute);font-size:13px}
+.pay .amt{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pay .amt small{display:block;white-space:normal;font-weight:400;color:var(--mute);font-size:11px}
+.bulk{display:inline-block;font-size:12px;font-weight:700;background:var(--blueSoft);color:var(--blue);padding:2px 9px;border-radius:20px;margin-left:4px;vertical-align:2px}
+.bulkNote{font-size:12px;color:var(--mute);padding-top:8px;border-top:1px dashed var(--line)}
+.nopay{color:var(--mute);font-size:14px;padding:6px 0}
+.check{font-size:12px;color:var(--mute);margin-top:8px}
+.rules{font-size:13px;color:#3d4a42;line-height:1.65}
+.rules li{margin-bottom:4px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px dashed var(--line);font-size:14px}
+.toggle:first-of-type{border-top:0}
+.toggle small{display:block;color:var(--mute);font-size:12px}
+.sw{position:relative;width:46px;height:27px;flex:0 0 auto}
+.sw input{opacity:0;width:0;height:0}
+.sw i{position:absolute;inset:0;background:#cfcabd;border-radius:20px;transition:.2s;cursor:pointer}
+.sw i:before{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked+i{background:var(--green2)}
+.sw input:checked+i:before{transform:translateX(19px)}
+.row{display:flex;gap:8px;margin-top:12px}
+.modal{position:fixed;inset:0;background:rgba(20,30,25,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.on{display:flex}
+.modal div{background:#fff;border-radius:16px;padding:18px;max-width:320px;width:100%}
+.modal p{margin:0 0 14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;opacity:0;transition:.25s;pointer-events:none}
+.toast.on{opacity:1}
+details summary{cursor:pointer;font-weight:700}
+@media (max-width:480px){
+  .meta{grid-template-columns:1fr 1fr}
+  .meta .c{grid-column:1/3}
+  .prow{grid-template-columns:1fr auto 74px;gap:6px}
+  .stepper button{width:38px;height:38px}
+  .prow.locked .stepper i{width:38px}
+  .players{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⛳ 내기골프 계산기</h1>
+    <div class="sync" id="sync" style="display:none"></div>
+    <div class="meta">
+      <div class="c"><label>코스</label><input id="course" placeholder="골프장 이름"></div>
+      <div><label>날짜</label><input id="date" type="date"></div>
+      <div><label>기본 판돈(원)</label><input id="base" type="number" inputmode="numeric" step="500" min="0"></div>
+    </div>
+  </header>
+
+  <section id="joinBox" style="display:none">
+    <h2>참석자 입장</h2>
+    <p class="joinNote">주최자가 등록한 <b>본인 휴대폰 번호</b>를 입력하면 내 스코어를 직접 입력할 수 있어요.</p>
+    <form id="joinForm" class="joinForm">
+      <input id="joinPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" required>
+      <button class="btn" id="joinBtn" type="submit">입장</button>
+    </form>
+  </section>
+
+  <div id="main">
+  <section>
+    <h2>플레이어 <small class="hostOnly">이름 · 휴대폰 번호</small></h2>
+    <div class="players" id="players"></div>
+    <div id="share"></div>
+  </section>
+
+  <section>
+    <h2>홀별 입력 <small>점수는 파 기준 (+1 보기, −1 버디)</small></h2>
+    <div class="holes" id="holes"></div>
+    <div class="holeHead">
+      <div class="holeTitle" id="holeTitle"></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:12px;color:var(--mute)">Par</span>
+        <div class="seg" id="parSeg"></div>
+      </div>
+    </div>
+    <div class="stakeBox" id="stakeBox"></div>
+    <div id="prows"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px">
+      <span style="font-size:12px;color:var(--mute)">판돈 수동 지정</span>
+      <div class="seg" id="ovSeg"></div>
+    </div>
+    <div class="nav">
+      <button class="ghost" id="prev">◀ 이전 홀</button>
+      <button id="next">다음 홀 ▶</button>
+    </div>
+  </section>
+
+  <section>
+    <h2><span id="payTitle">이 홀 주고받기</span> <small id="payStake"></small></h2>
+    <div id="pays"></div>
+  </section>
+
+  <section>
+    <h2>정산 <small>모든 금액은 원</small></h2>
+    <table class="settle" id="settle"></table>
+    <div class="check" id="check"></div>
+    <div class="row">
+      <button class="btn" id="copy">결과 복사</button>
+      <button class="btn danger hostOnly" id="reset">새 라운드</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>스코어카드 <small>칸을 누르면 그 홀로 이동</small></h2>
+    <div class="tbl"><table id="card"></table></div>
+  </section>
+
+  <section>
+    <h2>규칙 설정</h2>
+    <details>
+      <summary>계산 방식 (엑셀과 동일)</summary>
+      <ul class="rules">
+        <li><b>타당 정산</b> — 홀마다 다른 사람과의 타수 차이 × 그 홀 판돈을 주고받습니다.</li>
+        <li><b>버디값</b> — 버디한 사람은 버디 못 한 사람 각각에게 보너스 1타를 더 받습니다.</li>
+        <li><b>이글값</b> — 이글한 사람은 이글 못 한 사람 각각에게 보너스 3타를 더 받습니다.</li>
+        <li><b>배판(판돈 2배)</b> — 다음 중 하나면 그 홀 판돈이 2배:
+          버디·이글이 나옴 / 누군가 트리플보기 이상(파3는 더블보기 이상) / 3명 이상 같은 타수 / 직전 홀이 4명 모두 동타(이월).</li>
+        <li><b>일괄 지급</b> — 버디·이글 없이 제일 잘 친 사람 기준 1타 차가 2명, 2타 차가 1명이면(예: 파·보기·보기·더블), 2타 차인 사람이 제일 잘 친 사람에게 4타 몫을 한꺼번에 줍니다. 금액 합계는 같습니다.</li>
+        <li>이월은 누적되지 않고 다음 홀 2배까지만 적용됩니다. 9번 → 10번 홀로도 이어집니다.</li>
+        <li><b>판돈 수동 지정</b> — 엑셀에서 2번 홀 판돈을 직접 1,000으로 적었던 것처럼, 특정 홀만 기본/배판으로 고정할 수 있습니다.</li>
+        <li><b>추가 정산</b> — 핸디 반영 등 엑셀 Y열에 따로 더하던 금액을 사람별로 입력하면 최종 금액에 더해집니다.</li>
+      </ul>
+    </details>
+  </section>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div><p>현재 라운드를 지우고 새로 시작할까요?<br><small style="color:#6b766e">플레이어 이름과 판돈은 유지됩니다.</small></p>
+  <div class="row" style="margin-top:0"><button class="btn ghost" id="mNo">취소</button><button class="btn" id="mYes" style="background:var(--red)">새로 시작</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script id="calc">
+// ===== 계산 엔진 (엑셀 수식과 동일) =====
+function holeCalc(scores, par, base, prevTie, override, eagleBonus){
+  const crit = par > 3 ? 3 : 2;               // 배판기준
+  const reasons = [];
+  if (scores.includes(-2)) reasons.push('이글');
+  if (scores.includes(-1)) reasons.push('버디');
+  if (scores.some(x => x >= crit)) reasons.push(par > 3 ? '트리플 이상' : '더블 이상(파3)');
+  if (scores.some(x => scores.filter(y => y === x).length > 2)) reasons.push('3명 이상 동타');
+  if (prevTie) reasons.push('전 홀 이월');
+  let doubled = reasons.length > 0;
+  if (override === 'base') doubled = false;
+  if (override === 'double') doubled = true;
+  const stake = doubled ? base * 2 : base;
+  const nB = scores.filter(x => x === -1).length;
+  const nE = scores.filter(x => x === -2).length;
+  const money = scores.map((s, i) => {
+    let m = 0;
+    scores.forEach((o, j) => { if (j !== i) m += (o - s) * stake; });
+    m += s === -1 ? (4 - nB) * stake : -nB * stake;
+    if (eagleBonus) m += s === -2 ? (4 - nE) * 3 * stake : -nE * 3 * stake;
+    return m;
+  });
+  const tie = scores.every(x => x === scores[0]);
+  return { stake, doubled, reasons, money, tie };
+}
+function roundCalc(st){
+  const holes = [];
+  let prevTie = false;
+  for (let h = 0; h < 18; h++){
+    const scores = st.scores.map(r => r[h]);
+    const r = holeCalc(scores, st.par[h], st.base, h > 0 && prevTie, st.override[h], true);
+    holes.push(r);
+    prevTie = r.tie;
+  }
+  return holes;
+}
+</script>
+<script>
+const KEY = 'naegi-golf-v1';
+const DEF_PAR = [4,5,4,4,4,3,5,3,4, 4,4,5,3,4,4,4,3,5];
+function fresh(prev){
+  return {
+    course: prev ? prev.course : '', date: new Date().toISOString().slice(0,10),
+    base: prev ? prev.base : 1000,
+    names: prev ? prev.names.slice() : ['플레이어1','플레이어2','플레이어3','플레이어4'],
+    phones: prev && prev.phones ? prev.phones.slice() : ['','','',''],
+    share: prev ? prev.share || null : null,
+    par: prev ? prev.par.slice() : DEF_PAR.slice(),
+    scores: [0,1,2,3].map(() => Array(18).fill(0)),
+    override: Array(18).fill('auto'),
+    extra: [0,0,0,0], eagle: prev ? prev.eagle : false, cur: 0
+  };
+}
+const $ = id => document.getElementById(id);
+const won = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n).toLocaleString('ko-KR');
+const cls = n => n > 0 ? 'pos' : n < 0 ? 'neg' : 'zero';
+function label(d){
+  return ({'-3':'알바트로스','-2':'이글','-1':'버디','0':'파','1':'보기','2':'더블','3':'트리플','4':'쿼드'})[d] || ('+' + d);
+}
+function scls(d){ return d<=-2?'s-eagle':d===-1?'s-birdie':d===0?'s-par':d===1?'s-bogey':d===2?'s-double':'s-worse'; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+const fmtPhone = v => { const d = String(v||'').replace(/\D/g,'').slice(0,11);
+  return d.length < 4 ? d : d.length < 8 ? d.slice(0,3)+'-'+d.slice(3) : d.slice(0,3)+'-'+d.slice(3,d.length-4)+'-'+d.slice(-4); };
+
+// ===== 모드 결정 =====
+// local : 이 기기에서만 계산 (기존 방식)
+// host  : 주최자 — 라운드를 서버에 공유하고 전원 스코어·설정 수정 가능
+// player: 참석자 — 개인 링크(또는 휴대폰 번호)로 입장, 본인 스코어만 입력
+// join  : 참석자 링크에 개인 키가 없을 때 휴대폰 번호 입력 화면
+const qs = new URLSearchParams(location.search);
+const qR = qs.get('r'), qT = qs.get('t');
+let st = lsGet(KEY);
+if (!st || !st.scores) st = fresh();
+if (!st.phones) st.phones = ['','','',''];
+let mode = 'local', sess = null;   // sess = { id, key, i }
+if (qR && !(st.share && st.share.id === qR)){
+  const saved = lsGet('naegi-golf-join-' + qR);
+  const key = qT || (saved && saved.key);
+  if (key){
+    sess = { id: qR, key, i: saved && saved.key === key ? saved.i : null };
+    mode = 'player';
+    const cache = lsGet('naegi-golf-r-' + qR);
+    st = cache && cache.scores ? cache : fresh();
+    st.share = null;
+  } else mode = 'join';
+  if (qT) history.replaceState(null, '', location.pathname + '?r=' + encodeURIComponent(qR));
+} else if (st.share){
+  mode = 'host'; sess = { id: st.share.id, key: st.share.hostKey, i: null };
+  if (qR) history.replaceState(null, '', location.pathname);
+}
+const isPlayer = () => mode === 'player' || mode === 'join';
+const canEdit = i => mode !== 'player' || i === sess.i;
+let outbox = (mode === 'host' || mode === 'player') ? (lsGet('naegi-golf-outbox-' + sess.id) || []) : [];
+
+function save(){
+  if (mode === 'player') lsSet('naegi-golf-r-' + sess.id, st);
+  else if (mode !== 'join') lsSet(KEY, st);
+  if (sess) lsSet('naegi-golf-outbox-' + sess.id, outbox);
+}
+
+// ===== 서버 통신 =====
+async function api(path, method = 'GET', body, key){
+  const r = await fetch('/api/round' + path, {
+    method, cache: 'no-store',
+    headers: Object.assign({ 'content-type': 'application/json' }, key ? { authorization: 'Bearer ' + key } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {}; try { j = await r.json(); } catch(e){}
+  if (!r.ok){ const e = new Error(j.error || ('오류 ' + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+const metaOf = () => ({ course: st.course, date: st.date, base: st.base, names: st.names, par: st.par, override: st.override, extra: st.extra });
+function applyServer(s){
+  if (!s) return;
+  const focus = document.activeElement;
+  Object.assign(st, { course: s.meta.course, date: s.meta.date, base: s.meta.base, names: s.meta.names.slice(),
+    par: s.meta.par.slice(), override: s.meta.override.slice(), extra: s.meta.extra.slice(), scores: s.scores.map(r => r.slice()) });
+  save();
+  bindStatic(focus);
+  render();
+}
+let syncState = 'ok', syncMsg = '', editSeq = 0, flushing = false, metaTimer = null, phoneTimer = null;
+function setSync(s, msg){ syncState = s; syncMsg = msg || ''; renderSync(); }
+function queue(op){
+  editSeq++;
+  if (op.type === 'score') outbox = outbox.filter(o => !(o.type === 'score' && o.i === op.i && o.h === op.h));
+  if (op.type === 'meta' || op.type === 'phones') outbox = outbox.filter(o => o.type !== op.type);
+  if (op.type === 'reset') outbox = outbox.filter(o => o.type === 'phones');
+  outbox.push(op); save(); flush();
+}
+function queueMeta(){ if (mode !== 'host') return; editSeq++; clearTimeout(metaTimer); metaTimer = setTimeout(() => { metaTimer = null; queue({ type: 'meta' }); }, 500); }
+async function flush(){
+  if (flushing || !sess || mode === 'join') return;
+  flushing = true;
+  try {
+    while (outbox.length){
+      setSync('saving');
+      const op = outbox[0];
+      const body = op.type === 'meta' ? { type: 'meta', meta: metaOf() }
+        : op.type === 'reset' ? { type: 'reset', meta: metaOf() }
+        : op.type === 'phones' ? { type: 'phones', phones: st.phones } : op;
+      let r;
+      try { r = await api('/' + sess.id + '/op', 'POST', body, sess.key); }
+      catch(e){
+        if (e.status && e.status < 500){ outbox.shift(); save(); toast(e.message); if (e.status === 401) setSync('err', e.message); continue; }
+        setSync('err', '연결이 불안정해요 — 자동으로 다시 보냅니다'); setTimeout(flush, 3000); return;
+      }
+      outbox.shift(); save();
+      if (sess.i === null && r.i !== null && r.i !== undefined) sess.i = r.i;
+      if (!outbox.length && !metaTimer) applyServer(r.state);
+    }
+    setSync('ok');
+  } finally { flushing = false; }
+}
+async function poll(){
+  if (!sess || mode === 'join' || document.hidden) return;
+  if (outbox.length || metaTimer || flushing){ flush(); return; }
+  const seq = editSeq;
+  try {
+    const r = await api('/' + sess.id, 'GET', null, sess.key);
+    if (mode === 'player'){
+      if (r.role !== 'player'){ setSync('err', '개인 링크가 유효하지 않아요. 휴대폰 번호로 다시 입장해 주세요.'); return; }
+      if (sess.i !== r.i){ sess.i = r.i; lsSet('naegi-golf-join-' + sess.id, { key: sess.key, i: r.i }); }
+    }
+    if (seq === editSeq && !outbox.length && !metaTimer) applyServer(r.state);
+    setSync('ok');
+  } catch(e){
+    if (e.status === 404){ setSync('err', '라운드가 종료되었거나 찾을 수 없어요.'); return; }
+    setSync('err', '연결이 불안정해요 — 다시 시도 중');
+  }
+}
+setInterval(poll, 4000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+window.addEventListener('online', () => { flush(); poll(); });
+
+// ===== 정적 입력 바인딩 =====
+function bindStatic(focus){
+  for (const [id, v] of [['course', st.course], ['date', st.date], ['base', st.base]]) if ($(id) !== focus) $(id).value = v;
+  renderPlayers(focus);
+}
+['course','date','base'].forEach(id => { $(id).readOnly = isPlayer(); });
+$('course').oninput = e => { st.course = e.target.value; save(); queueMeta(); };
+$('date').oninput = e => { st.date = e.target.value; save(); queueMeta(); };
+$('base').oninput = e => { st.base = Math.max(0, parseInt(e.target.value) || 0); save(); render(); queueMeta(); };
+
+function renderPlayers(focus){
+  const box = $('players');
+  if (focus && box.contains(focus)) {
+    box.querySelectorAll('input[data-f="name"]').forEach(el => { if (el !== focus) el.value = st.names[+el.dataset.i]; });
+    return;
+  }
+  box.innerHTML = st.names.map((n,i) => `<div class="pcard ${mode==='player' && sess.i===i ? 'me' : ''}">
+      <input data-i="${i}" data-f="name" value="${esc(n)}" maxlength="8" ${isPlayer() ? 'readonly' : ''} aria-label="이름">
+      ${isPlayer() ? (mode==='player' && sess.i===i ? '<span class="metag">나</span>' : '')
+        : `<input data-i="${i}" data-f="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="휴대폰 번호" value="${esc(fmtPhone(st.phones[i]))}" aria-label="휴대폰 번호">`}
+    </div>`).join('');
+}
+$('players').oninput = e => {
+  const i = +e.target.dataset.i, f = e.target.dataset.f;
+  if (isPlayer()) return;
+  if (f === 'name'){ st.names[i] = e.target.value; save(); render(); queueMeta(); }
+  if (f === 'phone'){
+    const v = fmtPhone(e.target.value); if (v !== e.target.value) e.target.value = v;
+    st.phones[i] = v; save(); renderShare();
+    if (mode === 'host'){ clearTimeout(phoneTimer); phoneTimer = setTimeout(() => queue({ type: 'phones' }), 600); }
+  }
+};
+
+// ===== 휴대폰 공유 패널 (주최자) =====
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const baseUrl = () => location.origin + location.pathname;
+const personalLink = i => `${baseUrl()}?r=${st.share.id}&t=${st.share.tokens[i]}`;
+const joinLink = () => `${baseUrl()}?r=${st.share.id}`;
+function smsBody(i){
+  const title = [st.course, st.date].filter(Boolean).join(' ');
+  return `[내기골프${title ? ' · ' + title : ''}]\n${st.names[i] || ('P' + (i+1))}님 스코어 입력 링크입니다. 링크를 열어 본인 스코어를 직접 입력해 주세요.\n${personalLink(i)}`;
+}
+function smsHref(i){
+  const num = String(st.phones[i] || '').replace(/\D/g, '');
+  return `sms:${num}${isIOS ? '&' : '?'}body=${encodeURIComponent(smsBody(i))}`;
+}
+function renderShare(){
+  const box = $('share');
+  if (mode === 'local'){
+    box.innerHTML = `<div class="shareIntro"><b>📱 각자 휴대폰으로 스코어 입력</b>
+      <p>위에 참석자 휴대폰 번호를 입력하고 아래 버튼을 누르면, 참석자별 개인 링크를 문자로 보낼 수 있어요. 참석자는 링크를 열어 <b>본인 스코어만</b> 입력하고, 결과는 모든 휴대폰에 실시간으로 반영됩니다.</p>
+      <button class="btn" id="shareStart">휴대폰 입력 시작</button></div>`;
+    $('shareStart').onclick = startShare;
+    return;
+  }
+  if (mode !== 'host'){ box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="shareHead"><b>📱 참석자에게 입력 링크 보내기</b><small>번호로 입장 시 위 번호와 일치해야 해요</small></div>` +
+    st.names.map((n,i) => {
+      const ok = String(st.phones[i]||'').replace(/\D/g,'').length >= 10;
+      return `<div class="srow"><div class="sname">${esc(n || 'P'+(i+1))}<small>${ok ? esc(fmtPhone(st.phones[i])) : '번호 미입력'}</small></div>
+        <a class="sbtn ${ok ? '' : 'off'}" ${ok ? `href="${smsHref(i)}"` : ''} data-sms="${i}">문자 보내기</a>
+        <button class="sbtn ghost" data-copy="${i}">링크 복사</button></div>`;
+    }).join('') +
+    `<div class="row"><button class="btn ghost" id="copyJoin">번호로 입장 링크 복사</button><button class="btn ghost" id="shareStop">이 기기 공유 해제</button></div>`;
+  box.onclick = e => {
+    const c = e.target.closest('[data-copy]');
+    if (c) copyText(personalLink(+c.dataset.copy), '개인 링크를 복사했어요');
+    const s = e.target.closest('a.sbtn.off');
+    if (s){ e.preventDefault(); toast('휴대폰 번호를 먼저 입력하세요'); }
+  };
+  $('copyJoin').onclick = () => copyText(`[내기골프] 아래 링크를 열고 본인 휴대폰 번호로 입장해 스코어를 입력해 주세요.\n${joinLink()}`, '입장 링크를 복사했어요');
+  $('shareStop').onclick = () => { if (!confirm('이 기기에서 공유를 해제할까요?\n참석자 링크는 더 이상 이 기기 화면과 연동되지 않습니다.')) return;
+    st.share = null; mode = 'local'; sess = null; outbox = []; save(); renderAll(); toast('공유를 해제했어요'); };
+}
+async function startShare(){
+  const b = $('shareStart'); b.disabled = true; b.textContent = '링크 만드는 중…';
+  try {
+    const r = await api('', 'POST', { meta: metaOf(), scores: st.scores, phones: st.phones });
+    st.share = { id: r.id, hostKey: r.hostKey, tokens: r.tokens };
+    mode = 'host'; sess = { id: r.id, key: r.hostKey, i: null }; outbox = [];
+    save(); renderAll(); toast('공유를 시작했어요 — 참석자에게 문자를 보내세요');
+  } catch(e){
+    toast(e.status ? e.message : '서버에 연결할 수 없어요'); b.disabled = false; b.textContent = '휴대폰 입력 시작';
+  }
+}
+function copyText(t, ok){
+  try { navigator.clipboard.writeText(t).then(() => toast(ok), () => toast('복사가 막혀 있어요')); } catch(e){ toast('복사가 막혀 있어요'); }
+}
+
+// ===== 참석자 입장 (휴대폰 번호) =====
+function renderJoin(){
+  $('joinBox').style.display = mode === 'join' ? '' : 'none';
+  if (mode !== 'join') return;
+  $('joinPhone').oninput = e => { const v = fmtPhone(e.target.value); if (v !== e.target.value) e.target.value = v; };
+  $('joinForm').onsubmit = async e => {
+    e.preventDefault();
+    const btn = $('joinBtn'); btn.disabled = true;
+    try {
+      const r = await api('/' + qR + '/join', 'POST', { phone: $('joinPhone').value });
+      lsSet('naegi-golf-join-' + qR, { key: r.token, i: r.i });
+      mode = 'player'; sess = { id: qR, key: r.token, i: r.i };
+      st = lsGet('naegi-golf-r-' + qR) || fresh(); st.share = null;
+      outbox = lsGet('naegi-golf-outbox-' + qR) || [];
+      renderAll(); poll();
+    } catch(err){ toast(err.status ? err.message : '서버에 연결할 수 없어요'); }
+    btn.disabled = false;
+  };
+}
+
+function renderSync(){
+  const el = $('sync');
+  if (mode === 'local' || mode === 'join'){ el.style.display = mode === 'join' ? '' : 'none'; el.className = 'sync'; el.textContent = '참석자 입장'; return; }
+  el.style.display = '';
+  const who = mode === 'host' ? '주최자' : (sess.i !== null ? `${st.names[sess.i] || 'P' + (sess.i+1)} 입력 중` : '참석자');
+  el.className = 'sync ' + syncState;
+  el.textContent = syncState === 'err' ? '⚠ ' + syncMsg : syncState === 'saving' ? `● ${who} · 저장 중…` : `● 실시간 공유 · ${who}`;
+}
+
+function go(h){ st.cur = Math.max(0, Math.min(17, h)); save(); render(); const c = document.querySelector('.chip.on'); if (c) c.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'}); }
+$('prev').onclick = () => go(st.cur - 1);
+$('next').onclick = () => go(st.cur + 1);
+
+function render(){
+  document.body.classList.toggle('as-player', isPlayer());
+  $('main').style.display = mode === 'join' ? 'none' : '';
+  renderSync();
+  if (mode === 'join') return;
+  const R = roundCalc(st);
+  const h = st.cur, hr = R[h];
+  const nm = i => st.names[i] || ('P' + (i+1));
+  const ro = isPlayer();
+
+  // 홀 칩
+  $('holes').innerHTML = R.map((r,i) => {
+    const carry = i>0 && R[i-1].tie && r.doubled;
+    return `<button class="chip ${i===9?'sep':''} ${r.doubled?(carry&&r.reasons.length===1?'carry':'dbl'):''} ${i===h?'on':''}" data-h="${i}"><b>${i%9+1}</b><span>${i<9?'전':'후'} P${st.par[i]}</span></button>`;
+  }).join('');
+  $('holes').onclick = e => { const b = e.target.closest('.chip'); if (b) go(+b.dataset.h); };
+
+  $('holeTitle').innerHTML = `${h<9?'전반':'후반'} ${h%9+1}번 홀<span>(${h+1}/18)</span>`;
+  $('parSeg').className = 'seg' + (ro ? ' ro' : '');
+  $('parSeg').innerHTML = [3,4,5].map(p => `<button class="${st.par[h]===p?'on':''}" data-p="${p}" ${ro?'disabled':''}>${p}</button>`).join('');
+  $('parSeg').onclick = e => { const p = e.target.dataset.p; if (p && !ro){ st.par[h] = +p; save(); render(); queueMeta(); } };
+
+  const ov = st.override[h];
+  $('ovSeg').className = 'seg' + (ro ? ' ro' : '');
+  $('ovSeg').innerHTML = [['auto','자동'],['base','기본'],['double','배판']].map(([k,t]) => `<button class="${ov===k?'on':''}" data-k="${k}" ${ro?'disabled':''}>${t}</button>`).join('');
+  $('ovSeg').onclick = e => { const k = e.target.dataset.k; if (k && !ro){ st.override[h] = k; save(); render(); queueMeta(); } };
+
+  let why = hr.reasons.length ? hr.reasons.join(' · ') : '배판 조건 없음';
+  if (ov !== 'auto') why = '수동 지정' + (hr.reasons.length ? ` (자동이면: ${hr.reasons.join(' · ')})` : '');
+  const tieNote = hr.tie ? ' · 4명 동타 → 다음 홀 이월' : '';
+  $('stakeBox').className = 'stakeBox' + (hr.doubled ? ' dbl' : '');
+  $('stakeBox').innerHTML = `<div><div class="tag">${hr.doubled ? '🔥 배판' : '일반'}</div><div class="why">${why}${tieNote}</div></div><div class="amt">${hr.stake.toLocaleString('ko-KR')}원</div>`;
+
+  $('prows').innerHTML = st.names.map((_,i) => {
+    const d = st.scores[i][h], strokes = st.par[h] + d, m = hr.money[i], ed = canEdit(i);
+    const me = mode === 'player' && sess.i === i;
+    return `<div class="prow ${me?'me':''} ${ed?'':'locked'}"><div class="pname">${esc(nm(i))}${me?' <span class="metag">나</span>':''}<small>${strokes}타</small></div>
+      <div class="stepper">${ed ? `<button data-i="${i}" data-d="-1" aria-label="빼기">−</button>` : '<i></i>'}
+      <div class="score ${scls(d)}"><b>${d>0?'+'+d:d}</b><span>${label(d)}</span></div>
+      ${ed ? `<button data-i="${i}" data-d="1" aria-label="더하기">+</button>` : '<i></i>'}</div>
+      <div class="money ${cls(m)}">${won(m)}</div></div>`;
+  }).join('');
+  $('prows').onclick = e => { const b = e.target.closest('button[data-d]'); if (!b) return;
+    const i = +b.dataset.i; if (!canEdit(i)) return;
+    st.scores[i][h] = Math.max(-3, Math.min(st.par[h] + 5, st.scores[i][h] + +b.dataset.d)); save(); render();
+    if (sess && mode !== 'local') queue({ type: 'score', i, h, v: st.scores[i][h] }); };
+
+  // 이 홀 주고받기 (두 사람씩 짝지어 계산 — 합치면 위 사람별 금액과 같음)
+  const sc = st.scores.map(r => r[h]);
+  const pays = [];
+  for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++){
+    const strokeDiff = sc[j] - sc[i];                       // +면 j가 i에게 줌
+    const birdie = (sc[i] === -1 && sc[j] !== -1) ? 1 : (sc[j] === -1 && sc[i] !== -1) ? -1 : 0;
+    const eagle = (sc[i] === -2 && sc[j] !== -2) ? 3 : (sc[j] === -2 && sc[i] !== -2) ? -3 : 0;
+    const t = strokeDiff + birdie + eagle;
+    if (t === 0) continue;
+    const [win, lose, sign] = t > 0 ? [i, j, 1] : [j, i, -1];
+    const parts = [];
+    if (strokeDiff) parts.push(`타수 ${strokeDiff * sign}타`);
+    if (birdie) parts.push(`버디 ${birdie * sign > 0 ? '+' : ''}${birdie * sign}타`);
+    if (eagle) parts.push(`이글 ${eagle * sign > 0 ? '+' : ''}${eagle * sign}타`);
+    pays.push({ win, lose, ta: Math.abs(t), amt: Math.abs(t) * hr.stake, parts });
+  }
+  pays.sort((a, b) => b.amt - a.amt);
+  // 일괄 지급: 버디·이글 없이 최저타 기준 차이가 [0,1,1,2]이면
+  // 1타 차 두 명은 받은 만큼 그대로 넘겨주므로, 2타 차 한 명이 최저타에게 한꺼번에 지급
+  const mn = Math.min(...sc);
+  const rel = sc.map(x => x - mn);
+  const bulk = !sc.includes(-1) && !sc.includes(-2) && rel.slice().sort((a,b)=>a-b).join() === '0,1,1,2';
+  if (bulk){
+    const win = rel.indexOf(0), lose = rel.indexOf(2);
+    pays.length = 0;
+    pays.push({ win, lose, ta: 4, amt: 4 * hr.stake,
+      parts: [`직접 2타`, `1타 차 2명 몫 2타`] });
+  }
+  $('payTitle').innerHTML = `${h<9?'전반':'후반'} ${h%9+1}번 홀 주고받기` + (bulk ? ' <span class="bulk">일괄 지급</span>' : '');
+  $('payStake').textContent = `1타 = ${hr.stake.toLocaleString('ko-KR')}원`;
+  $('pays').innerHTML = pays.length ? pays.map(p => `<div class="pay"><div class="from">${esc(nm(p.lose))}</div><div class="arr">→</div><div class="to">${esc(nm(p.win))}</div>
+      <div class="amt">${p.amt.toLocaleString('ko-KR')}원<small>${p.ta}타 (${p.parts.join(', ')})</small></div></div>`).join('')
+    : '<div class="nopay">주고받을 금액이 없어요.</div>';
+  if (bulk){
+    const mids = rel.map((x,k) => x === 1 ? nm(k) : null).filter(Boolean).map(esc);
+    $('pays').innerHTML += `<div class="bulkNote">${mids.join('·')}은(는) 받은 돈을 그대로 넘겨주므로 서로 주고받을 필요가 없어요.</div>`;
+  }
+
+  // 정산
+  const sumRange = (i,a,b) => R.slice(a,b).reduce((s,r) => s + r.money[i], 0);
+  const strokes = i => st.scores[i].reduce((s,d,k) => s + d + st.par[k], 0);
+  const rows = st.names.map((_,i) => ({ i, f: sumRange(i,0,9), b: sumRange(i,9,18), t: sumRange(i,0,18), x: st.extra[i] || 0 }));
+  rows.forEach(r => r.final = r.t + r.x);
+  const order = rows.slice().sort((a,b) => b.final - a.final);
+  const rank = {}; order.forEach((r,k) => rank[r.i] = k+1);
+  const fx = document.activeElement && $('settle').contains(document.activeElement);
+  if (!fx) $('settle').innerHTML = `<tr><th>이름</th><th>타수</th><th>전반</th><th>후반</th><th>추가</th><th>최종</th></tr>` +
+    rows.map(r => `<tr><td><span class="rank">${rank[r.i]}</span>${esc(nm(r.i))}</td><td>${strokes(r.i)}</td>
+      <td class="${cls(r.f)}">${won(r.f)}</td><td class="${cls(r.b)}">${won(r.b)}</td>
+      <td><input type="number" inputmode="numeric" step="1000" data-i="${r.i}" value="${r.x||''}" placeholder="0" ${ro?'readonly':''}></td>
+      <td class="final ${cls(r.final)}">${won(r.final)}</td></tr>`).join('');
+  const sumAll = rows.reduce((s,r) => s + r.final, 0);
+  const dblCnt = R.filter(r => r.doubled).length;
+  $('check').textContent = `배판 ${dblCnt}홀 · 합계 검증 ${sumAll === 0 ? '0원 ✓' : won(sumAll) + '원 (추가정산 합이 0이 아님)'}`;
+  _rows = rows;
+
+  // 스코어카드
+  const hdr = (a,b,t) => R.slice(a,b).map((_,k) => `<th>${k+1}</th>`).join('') + `<th>${t}</th>`;
+  const cells = (arr,a,b,fmt,sum) => arr.slice(a,b).map((v,k) => `<td class="click ${R[a+k].doubled?'dbl':''}" data-h="${a+k}">${fmt(v)}</td>`).join('') + `<td class="sum">${sum}</td>`;
+  const parRow = `<tr class="par"><td class="n">Par</td>${st.par.slice(0,9).map(p=>`<td>${p}</td>`).join('')}<td class="sum">${st.par.slice(0,9).reduce((a,b)=>a+b,0)}</td>${st.par.slice(9).map(p=>`<td>${p}</td>`).join('')}<td class="sum">${st.par.slice(9).reduce((a,b)=>a+b,0)}</td></tr>`;
+  const pRows = st.names.map((_,i) => {
+    const s = st.scores[i];
+    const f = s.slice(0,9).reduce((a,b)=>a+b,0), b = s.slice(9).reduce((a,b)=>a+b,0);
+    return `<tr class="${mode==='player'&&sess.i===i?'me':''}"><td class="n">${esc(nm(i))}</td>${cells(s,0,9,v=>v>0?'+'+v:v, f>0?'+'+f:f)}${cells(s,9,18,v=>v>0?'+'+v:v, b>0?'+'+b:b)}</tr>`;
+  }).join('');
+  $('card').innerHTML = `<tr><th></th>${hdr(0,9,'전반')}${hdr(9,18,'후반')}</tr>${parRow}${pRows}`;
+  $('card').onclick = e => { const td = e.target.closest('td[data-h]'); if (td){ go(+td.dataset.h); window.scrollTo({top: $('holes').getBoundingClientRect().top + scrollY - 80, behavior:'smooth'}); } };
+}
+let _rows = [];
+$('settle').addEventListener('change', e => { if (e.target.dataset.i !== undefined && !isPlayer()){ st.extra[+e.target.dataset.i] = parseInt(e.target.value) || 0; save(); e.target.blur(); render(); queueMeta(); } });
+
+function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
+$('copy').onclick = () => {
+  const lines = [`⛳ ${st.course || '내기골프'} ${st.date} (판돈 ${st.base.toLocaleString('ko-KR')}원)`];
+  _rows.slice().sort((a,b) => b.final - a.final).forEach(r => lines.push(`${st.names[r.i]}: ${won(r.final)}원 (전반 ${won(r.f)} / 후반 ${won(r.b)}${r.x ? ' / 추가 ' + won(r.x) : ''})`));
+  copyText(lines.join('\n'), '결과를 복사했어요');
+};
+$('reset').onclick = () => $('modal').classList.add('on');
+$('mNo').onclick = () => $('modal').classList.remove('on');
+$('mYes').onclick = () => { st = fresh(st); save(); $('date').value = st.date; $('modal').classList.remove('on'); render();
+  if (mode === 'host') queue({ type: 'reset' });
+  toast('새 라운드를 시작했어요'); };
+
+function renderAll(){ ['course','date','base'].forEach(id => { $(id).readOnly = isPlayer(); }); bindStatic(); renderShare(); renderJoin(); render(); }
+renderAll();
+if (sess){ flush(); poll(); }
+</script>
+</body>
+</html>
